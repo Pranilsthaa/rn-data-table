@@ -20,15 +20,16 @@
     "!**/__mocks__"
   ],
   "scripts": {
-    "build": "bob build",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "prepare": "bob build"
+    "build": "bunx bob build",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "bunx eslint \"src/**/*.{ts,tsx}\"",
+    "prepare": "bunx bob build"
   },
   "keywords": [
     "react-native",
     "data-table",
     "sticky-columns",
+    "finance-table",
     "reanimated",
     "gesture-handler",
     "table",
@@ -37,13 +38,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/rn-data-table.git"
+    "url": "https://github.com/Pranilsthaa/rn-data-table.git"
   },
-  "author": "Your Name <you@example.com>",
+  "author": "Pranil Shrestha <[pranilstha322@gmail.com]>",
   "license": "MIT",
   "peerDependencies": {
     "react": ">=18.0.0",
-    "react-native": ">=0.72.0",
+    "react-native": ">=0.77.0",
     "react-native-gesture-handler": ">=2.0.0",
     "react-native-reanimated": ">=3.0.0"
   },
