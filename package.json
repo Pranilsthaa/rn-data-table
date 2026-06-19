@@ -1,0 +1,81 @@
+{
+  "name": "rn-data-table",
+  "version": "1.0.0",
+  "description": "A performant, horizontally-scrollable React Native data table with sticky columns, nested rows, a totals footer row, and a fully themeable design system.",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "types": "lib/typescript/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/module/index.js",
+      "require": "./lib/commonjs/index.js",
+      "types": "./lib/typescript/index.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "scripts": {
+    "build": "bob build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "prepare": "bob build"
+  },
+  "keywords": [
+    "react-native",
+    "data-table",
+    "sticky-columns",
+    "reanimated",
+    "gesture-handler",
+    "table",
+    "spreadsheet",
+    "expo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/rn-data-table.git"
+  },
+  "author": "Your Name <you@example.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0",
+    "react-native-gesture-handler": ">=2.0.0",
+    "react-native-reanimated": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.10",
+    "@types/react-native": "^0.73.0",
+    "react": "^19.2.3",
+    "react-native": "^0.85.3",
+    "react-native-builder-bob": "^0.35.3",
+    "react-native-gesture-handler": "^3.0.2",
+    "react-native-reanimated": "^4.3.1",
+    "typescript": "~6.0.3"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript"
+      ]
+    ]
+  }
+}
