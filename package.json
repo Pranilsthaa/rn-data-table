@@ -1,5 +1,5 @@
 {
-  "name": "rn-data-table",
+  "name": "rn-sticky-data-table",
   "version": "1.0.0",
   "description": "A performant, horizontally-scrollable React Native data table with sticky columns, nested rows, a totals footer row, and a fully themeable design system.",
   "main": "lib/commonjs/index.js",
