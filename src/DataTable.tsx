@@ -62,6 +62,13 @@ export type Column = {
   sticky?: boolean;
 };
 
+export type FooterRow = {
+  /** Label shown in the first sticky column (e.g. "Total", "Grand Total"). */
+  label: string;
+  /** Column key → display value for each column in this footer row. */
+  values: Record<string, string | number>;
+};
+
 export interface DataTableProps {
   columns: Column[];
   data: any[];
@@ -75,8 +82,11 @@ export interface DataTableProps {
   onRefresh?: () => any;
   refreshing?: boolean;
   hasNextPage?: boolean;
-  /** Keys are column keys; values are the totals to display in the footer row. */
+  /** Keys are column keys; values are the totals to display in the footer row.
+   *  @deprecated Use `footerRows` instead for multiple footer rows. */
   totals?: Record<string, string | number>;
+  /** Multiple footer rows rendered below the data (e.g. Subtotal, Total, Grand Total). */
+  footerRows?: FooterRow[];
   /**
    * Visual theme. Defaults to a light palette if omitted.
    * Pass your own colors to match your app's design system.
@@ -255,6 +265,7 @@ interface StickyOverlayProps {
   renderValue: (col: Column, row: any) => React.ReactNode;
   scrollY: SharedValue<number>;
   totals?: Record<string, string | number>;
+  footerRows?: FooterRow[];
   theme: DataTableTheme;
 }
 
@@ -268,8 +279,17 @@ const StickyOverlay = memo(
     renderValue,
     scrollY,
     totals,
+    footerRows: footerRowsProp,
     theme,
   }: StickyOverlayProps) => {
+    // Normalize: merge legacy `totals` with explicit `footerRows`
+    const resolvedFooterRows = React.useMemo(() => {
+      const rows: FooterRow[] = footerRowsProp ? [...footerRowsProp] : [];
+      if (totals && !footerRowsProp) {
+        rows.push({ label: "Total", values: totals });
+      }
+      return rows;
+    }, [totals, footerRowsProp]);
     const stickyTranslate = useAnimatedStyle(() => ({
       transform: [{ translateY: -scrollY.value }],
     }));
@@ -362,15 +382,18 @@ const StickyOverlay = memo(
             );
           })}
 
-          {/* Sticky portion of the Total row */}
-          {totals && (
+          {/* Sticky portion of the footer rows */}
+          {resolvedFooterRows.map((fRow, fIdx) => (
             <View
+              key={`footer-sticky-${fIdx}`}
               style={[
                 styles.row,
                 styles.totalRow,
                 {
                   backgroundColor: theme.background2,
                   borderTopColor: theme.border,
+                  // Only show the thick top border on the first footer row
+                  borderTopWidth: fIdx === 0 ? 1.5 : StyleSheet.hairlineWidth,
                 },
               ]}
             >
@@ -388,15 +411,15 @@ const StickyOverlay = memo(
                     ]}
                   >
                     {i === 0
-                      ? "Total"
-                      : totals[col.key] !== undefined
-                        ? String(totals[col.key])
+                      ? fRow.label
+                      : fRow.values[col.key] !== undefined
+                        ? String(fRow.values[col.key])
                         : ""}
                   </Text>
                 </View>
               ))}
             </View>
-          )}
+          ))}
         </Animated.View>
       </Animated.View>
     );
@@ -420,6 +443,7 @@ export const DataTable = memo(
     refreshing = false,
     hasNextPage,
     totals,
+    footerRows: footerRowsProp,
     theme: themeOverride,
   }: DataTableProps) => {
     const theme = useMemo(() => mergeTheme(themeOverride), [themeOverride]);
@@ -472,17 +496,28 @@ export const DataTable = memo(
       [theme],
     );
 
+    // Normalize: merge legacy `totals` with explicit `footerRows`
+    const resolvedFooterRows = React.useMemo(() => {
+      const rows: FooterRow[] = footerRowsProp ? [...footerRowsProp] : [];
+      if (totals && !footerRowsProp) {
+        rows.push({ label: "Total", values: totals });
+      }
+      return rows;
+    }, [totals, footerRowsProp]);
+
     const renderFooter = () => (
       <>
-        {/* Scrollable portion of the Total row */}
-        {totals && (
+        {/* Scrollable portion of the footer rows */}
+        {resolvedFooterRows.map((fRow, fIdx) => (
           <View
+            key={`footer-scroll-${fIdx}`}
             style={[
               styles.row,
               styles.totalRow,
               {
                 backgroundColor: theme.background2,
                 borderTopColor: theme.border,
+                borderTopWidth: fIdx === 0 ? 1.5 : StyleSheet.hairlineWidth,
               },
             ]}
           >
@@ -502,15 +537,15 @@ export const DataTable = memo(
                       },
                     ]}
                   >
-                    {totals[col.key] !== undefined
-                      ? String(totals[col.key])
+                    {fRow.values[col.key] !== undefined
+                      ? String(fRow.values[col.key])
                       : ""}
                   </Text>
                 </View>
               ))}
             </View>
           </View>
-        )}
+        ))}
         {isFetchingMore && (
           <View style={styles.footerLoader}>
             <ActivityIndicator size="small" color={theme.accent} />
@@ -609,6 +644,7 @@ export const DataTable = memo(
           scrollY={scrollY}
           renderValue={renderValue}
           totals={totals}
+          footerRows={resolvedFooterRows}
           theme={theme}
         />
       </View>
