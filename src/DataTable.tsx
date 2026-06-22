@@ -444,11 +444,14 @@ const StickyOverlay = memo(
 
           {/* Sticky portion of bottomData */}
           {bottomData?.map((row, index) => {
-            const rowBg = index % 2 === 0 ? theme.background : theme.backgroundDark;
+            const rowBg =
+              index % 2 === 0 ? theme.background : theme.backgroundDark;
             return (
               <React.Fragment key={`bottom-sticky-${index}`}>
                 {index === 0 && (
-                  <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                  <View
+                    style={[styles.divider, { backgroundColor: theme.border }]}
+                  />
                 )}
                 <TouchableOpacity
                   activeOpacity={onPressRow ? 0.6 : 1}
@@ -464,11 +467,19 @@ const StickyOverlay = memo(
                         { width: col.width, paddingLeft: 14 },
                       ]}
                     >
-                      {renderValue(col, row)}
+                      <ScrollView
+                        horizontal
+                        bounces={false}
+                        showsHorizontalScrollIndicator={false}
+                      >
+                        {renderValue(col, row)}
+                      </ScrollView>
                     </View>
                   ))}
                 </TouchableOpacity>
-                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.border }]}
+                />
               </React.Fragment>
             );
           })}
@@ -538,23 +549,19 @@ export const DataTable = memo(
         const isBold = row._type === "section" || row._type === "total";
 
         return (
-          <ScrollView
-            horizontal
-            bounces={false}
-            showsHorizontalScrollIndicator={false}
+          <Text
+            style={[
+              styles.cellText,
+              {
+                color: theme.text,
+                fontFamily: isBold ? theme.fontBold : theme.fontMedium,
+              },
+            ]}
+            adjustsFontSizeToFit
+            numberOfLines={1}
           >
-            <Text
-              style={[
-                styles.cellText,
-                {
-                  color: theme.text,
-                  fontFamily: isBold ? theme.fontBold : theme.fontMedium,
-                },
-              ]}
-            >
-              {content}
-            </Text>
-          </ScrollView>
+            {content}
+          </Text>
         );
       },
       [theme],
@@ -613,11 +620,14 @@ export const DataTable = memo(
 
         {/* Scrollable portion of bottomData */}
         {bottomData?.map((row, index) => {
-          const rowBg = index % 2 === 0 ? theme.background : theme.backgroundDark;
+          const rowBg =
+            index % 2 === 0 ? theme.background : theme.backgroundDark;
           return (
             <React.Fragment key={`bottom-scroll-${index}`}>
               {index === 0 && (
-                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.border }]}
+                />
               )}
               <TouchableOpacity
                 activeOpacity={onPressRow ? 0.6 : 1}
@@ -628,13 +638,18 @@ export const DataTable = memo(
                 <View style={{ width: stickyWidth }} />
                 <View style={styles.scrollableColumnsContainer}>
                   {scrollColumns.map((col) => (
-                    <View key={col.key} style={[styles.cell, { width: col.width }]}>
+                    <View
+                      key={col.key}
+                      style={[styles.cell, { width: col.width }]}
+                    >
                       {renderValue(col, row)}
                     </View>
                   ))}
                 </View>
               </TouchableOpacity>
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              <View
+                style={[styles.divider, { backgroundColor: theme.border }]}
+              />
             </React.Fragment>
           );
         })}
