@@ -87,13 +87,14 @@ export interface DataTableProps {
   totals?: Record<string, string | number>;
   /** Multiple footer rows rendered below the data (e.g. Subtotal, Total, Grand Total). */
   footerRows?: FooterRow[];
+  /** Normal data rows rendered at the very bottom, after footerRows. */
+  bottomData?: any[];
   /**
    * Visual theme. Defaults to a light palette if omitted.
    * Pass your own colors to match your app's design system.
    */
   theme?: Partial<DataTableTheme>;
 }
-
 interface FlatRow<T> {
   row: T;
   depth: number;
@@ -110,7 +111,13 @@ function mergeTheme(override?: Partial<DataTableTheme>): DataTableTheme {
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
-const ChevronIcon = ({ expanded, color }: { expanded: boolean; color: string }) => (
+const ChevronIcon = ({
+  expanded,
+  color,
+}: {
+  expanded: boolean;
+  color: string;
+}) => (
   <View
     style={[
       styles.chevron,
@@ -138,7 +145,9 @@ function buildVisibleRows<T extends Record<string, unknown>>(
             : String(i)
           : `${parentKey}-${i}`;
 
-      const nested = nestedKey ? (row[nestedKey] as T[] | undefined) : undefined;
+      const nested = nestedKey
+        ? (row[nestedKey] as T[] | undefined)
+        : undefined;
       const hasNested = Array.isArray(nested) && nested.length > 0;
 
       result.push({ row, depth, rowKey, hasNested, nestedRows: nested ?? [] });
@@ -163,7 +172,12 @@ interface ScrollableHeaderProps {
 }
 
 const ScrollableHeader = memo(
-  ({ stickyColumns, scrollColumns, stickyWidth, theme }: ScrollableHeaderProps) => (
+  ({
+    stickyColumns,
+    scrollColumns,
+    stickyWidth,
+    theme,
+  }: ScrollableHeaderProps) => (
     <View
       style={[
         styles.headerRow,
@@ -266,6 +280,7 @@ interface StickyOverlayProps {
   scrollY: SharedValue<number>;
   totals?: Record<string, string | number>;
   footerRows?: FooterRow[];
+  bottomData?: any[];
   theme: DataTableTheme;
 }
 
@@ -280,6 +295,7 @@ const StickyOverlay = memo(
     scrollY,
     totals,
     footerRows: footerRowsProp,
+    bottomData,
     theme,
   }: StickyOverlayProps) => {
     // Normalize: merge legacy `totals` with explicit `footerRows`
@@ -368,7 +384,10 @@ const StickyOverlay = memo(
                     >
                       {i === 0 && hasNested && (
                         <View style={styles.expandBtn}>
-                          <ChevronIcon expanded={expanded} color={theme.subText} />
+                          <ChevronIcon
+                            expanded={expanded}
+                            color={theme.subText}
+                          />
                         </View>
                       )}
                       {renderValue(col, row)}
@@ -377,7 +396,9 @@ const StickyOverlay = memo(
                 </TouchableOpacity>
 
                 {/* Row divider — must mirror FlatList's ItemSeparatorComponent */}
-                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.border }]}
+                />
               </React.Fragment>
             );
           })}
@@ -420,6 +441,37 @@ const StickyOverlay = memo(
               ))}
             </View>
           ))}
+
+          {/* Sticky portion of bottomData */}
+          {bottomData?.map((row, index) => {
+            const rowBg = index % 2 === 0 ? theme.background : theme.backgroundDark;
+            return (
+              <React.Fragment key={`bottom-sticky-${index}`}>
+                {index === 0 && (
+                  <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                )}
+                <TouchableOpacity
+                  activeOpacity={onPressRow ? 0.6 : 1}
+                  disabled={!onPressRow}
+                  onPress={() => onPressRow?.(row)}
+                  style={[styles.row, { backgroundColor: rowBg }]}
+                >
+                  {stickyColumns.map((col, i) => (
+                    <View
+                      key={col.key}
+                      style={[
+                        styles.cell,
+                        { width: col.width, paddingLeft: 14 },
+                      ]}
+                    >
+                      {renderValue(col, row)}
+                    </View>
+                  ))}
+                </TouchableOpacity>
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              </React.Fragment>
+            );
+          })}
         </Animated.View>
       </Animated.View>
     );
@@ -444,6 +496,7 @@ export const DataTable = memo(
     hasNextPage,
     totals,
     footerRows: footerRowsProp,
+    bottomData,
     theme: themeOverride,
   }: DataTableProps) => {
     const theme = useMemo(() => mergeTheme(themeOverride), [themeOverride]);
@@ -455,13 +508,20 @@ export const DataTable = memo(
     const scrollContentWidth = scrollColumns.reduce((s, c) => s + c.width, 0);
     const totalWidth = stickyWidth + scrollContentWidth;
 
-    const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+    const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>(
+      {},
+    );
 
     const toggleRow = useCallback((key: string) => {
       setExpandedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
     }, []);
 
-    const visibleRows = buildVisibleRows(data, nestedKey, keyExtractor, expandedKeys);
+    const visibleRows = buildVisibleRows(
+      data,
+      nestedKey,
+      keyExtractor,
+      expandedKeys,
+    );
 
     const scrollY = useSharedValue(0);
 
@@ -475,22 +535,26 @@ export const DataTable = memo(
       (col: Column, row: any) => {
         const value = row[col.key];
         const content = String(value ?? "");
-        const isBold =
-          row._type === "section" || row._type === "total";
+        const isBold = row._type === "section" || row._type === "total";
 
         return (
-          <Text
-            style={[
-              styles.cellText,
-              {
-                color: theme.text,
-                fontFamily: isBold ? theme.fontBold : theme.fontMedium,
-              },
-            ]}
-            numberOfLines={1}
+          <ScrollView
+            horizontal
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
           >
-            {content}
-          </Text>
+            <Text
+              style={[
+                styles.cellText,
+                {
+                  color: theme.text,
+                  fontFamily: isBold ? theme.fontBold : theme.fontMedium,
+                },
+              ]}
+            >
+              {content}
+            </Text>
+          </ScrollView>
         );
       },
       [theme],
@@ -546,6 +610,35 @@ export const DataTable = memo(
             </View>
           </View>
         ))}
+
+        {/* Scrollable portion of bottomData */}
+        {bottomData?.map((row, index) => {
+          const rowBg = index % 2 === 0 ? theme.background : theme.backgroundDark;
+          return (
+            <React.Fragment key={`bottom-scroll-${index}`}>
+              {index === 0 && (
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              )}
+              <TouchableOpacity
+                activeOpacity={onPressRow ? 0.6 : 1}
+                disabled={!onPressRow}
+                onPress={() => onPressRow?.(row)}
+                style={[styles.row, { backgroundColor: rowBg }]}
+              >
+                <View style={{ width: stickyWidth }} />
+                <View style={styles.scrollableColumnsContainer}>
+                  {scrollColumns.map((col) => (
+                    <View key={col.key} style={[styles.cell, { width: col.width }]}>
+                      {renderValue(col, row)}
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
+              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            </React.Fragment>
+          );
+        })}
+
         {isFetchingMore && (
           <View style={styles.footerLoader}>
             <ActivityIndicator size="small" color={theme.accent} />
@@ -575,7 +668,9 @@ export const DataTable = memo(
       return (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyIcon, { color: theme.subText }]}>⊘</Text>
-          <Text style={[styles.emptyText, { color: theme.subText }]}>{emptyText}</Text>
+          <Text style={[styles.emptyText, { color: theme.subText }]}>
+            {emptyText}
+          </Text>
         </View>
       );
     }
@@ -607,7 +702,9 @@ export const DataTable = memo(
               />
             }
             ItemSeparatorComponent={() => (
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              <View
+                style={[styles.divider, { backgroundColor: theme.border }]}
+              />
             )}
             renderItem={({ item, index }) => (
               <ScrollableRow
@@ -645,6 +742,7 @@ export const DataTable = memo(
           renderValue={renderValue}
           totals={totals}
           footerRows={resolvedFooterRows}
+          bottomData={bottomData}
           theme={theme}
         />
       </View>
